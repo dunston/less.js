@@ -130,7 +130,7 @@ if (input != '-' && options.watch == false) {
     fs.readFile(input, 'utf-8', parseLessFile);
 } else if (input != '-' && options.watch == true) {
 	fs.readFile(input, 'utf-8', parseLessFile);
-	//watch(input);
+	watch(input);
 	for(var i = 0; i < options.paths.length; i++){
 		walker(options.paths[i])
 			.on('file', function(file, stat) {
