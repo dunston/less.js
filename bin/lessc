@@ -3,7 +3,8 @@
 var path = require('path'),
     fs = require('fs'),
     sys = require('sys');
-
+// Walker is a recursive watcher
+var walker = require('./include/walker.js');
 var less = require('../lib/less');
 var args = process.argv.slice(1);
 var options = {
@@ -11,7 +12,8 @@ var options = {
     optimization: 1,
     silent: false,
     paths: [],
-    color: true
+    color: true,
+	watch: false
 };
 
 args = args.filter(function (arg) {
@@ -58,6 +60,9 @@ args = args.filter(function (arg) {
                     }
                 });
             break;
+		case 'watch' :
+			options.watch = true;
+			break;
         case 'O0': options.optimization = 0; break;
         case 'O1': options.optimization = 1; break;
         case 'O2': options.optimization = 2; break;
@@ -111,8 +116,33 @@ var parseLessFile = function (e, data) {
     });
 };
 
-if (input != '-') {
+var watch = function(inputToWatch){
+	console.log('Watching ' + inputToWatch);
+	fs.watch(inputToWatch, function (event, filename) {
+		if(event == 'change'){
+			fs.readFile(input, 'utf-8', parseLessFile);
+			console.log('Watch fired - Compiled css file - File: ' + filename);
+		}
+	});
+}
+
+if (input != '-' && options.watch == false) {
     fs.readFile(input, 'utf-8', parseLessFile);
+} else if (input != '-' && options.watch == true) {
+	fs.readFile(input, 'utf-8', parseLessFile);
+	//watch(input);
+	for(var i = 0; i < options.paths.length; i++){
+		walker(options.paths[i])
+			.on('file', function(file, stat) {
+				var fileExtension = path.extname(file);
+				if(fileExtension == '.less' || fileExtension == '.css')
+				{
+					watch(file);
+				}
+				
+			})
+	}
+	
 } else {
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
